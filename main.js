@@ -56,6 +56,8 @@ runButton.addEventListener("click", async () => {
       maxWidth: 1024,
       maxHeight: 1024,
       cropPaddingRatio: 0.22,
+      cropPaddingTopRatio: 0.45,
+      cropPaddingBottomRatio: 0.18,
       keepCategoryIndexes: [1, 3],
       accessoryCategoryIndexes: [5],
       accessoryFaceExpansionRatio: 0.18,

@@ -29,6 +29,8 @@ const result = await cutoutFaceHair(imageElement, tasks, {
   maxWidth: 1024,
   maxHeight: 1024,
   cropPaddingRatio: 0.22,
+  cropPaddingTopRatio: 0.45,
+  cropPaddingBottomRatio: 0.18,
   chinMarginRatio: 0.06,
   bottomFeatherRatio: 0.025
 });

@@ -93,6 +93,9 @@ export async function createCutoutTasks(options = {}) {
  * @param {number} [options.maxWidth]
  * @param {number} [options.maxHeight]
  * @param {number} [options.cropPaddingRatio]
+ * @param {number} [options.cropPaddingXRatio]
+ * @param {number} [options.cropPaddingTopRatio]
+ * @param {number} [options.cropPaddingBottomRatio]
  * @param {number} [options.chinMarginRatio]
  * @param {number} [options.bottomFeatherRatio]
  * @param {number} [options.maskFeatherPx]
@@ -106,6 +109,9 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     maxWidth = 1024,
     maxHeight = 1024,
     cropPaddingRatio = 0.18,
+    cropPaddingXRatio = cropPaddingRatio,
+    cropPaddingTopRatio = cropPaddingRatio * 1.8,
+    cropPaddingBottomRatio = cropPaddingRatio,
     chinMarginRatio = 0.06,
     bottomFeatherRatio = 0.02,
     maskFeatherPx = 1
@@ -163,7 +169,11 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     throw new Error("The final mask is empty. Check segmenter category indexes.");
   }
 
-  const paddedBounds = padBounds(bounds, cropPaddingRatio);
+  const paddedBounds = padBounds(bounds, {
+    xRatio: cropPaddingXRatio,
+    topRatio: cropPaddingTopRatio,
+    bottomRatio: cropPaddingBottomRatio
+  });
   const cropped = cropAndResize(alphaCanvas, paddedBounds, maxWidth, maxHeight);
   const pngBlob = await canvasToBlob(cropped);
 
@@ -372,17 +382,18 @@ function getAlphaBounds(alpha, width, height) {
 
 /**
  * @param {{x: number, y: number, width: number, height: number}} bounds
- * @param {number} paddingRatio
+ * @param {{xRatio: number, topRatio: number, bottomRatio: number}} padding
  * @returns {{x: number, y: number, width: number, height: number}}
  */
-function padBounds(bounds, paddingRatio) {
-  const paddingX = Math.round(bounds.width * paddingRatio);
-  const paddingY = Math.round(bounds.height * paddingRatio);
+function padBounds(bounds, padding) {
+  const paddingX = Math.round(bounds.width * padding.xRatio);
+  const paddingTop = Math.round(bounds.height * padding.topRatio);
+  const paddingBottom = Math.round(bounds.height * padding.bottomRatio);
   return {
     x: bounds.x - paddingX,
-    y: bounds.y - paddingY,
+    y: bounds.y - paddingTop,
     width: bounds.width + paddingX * 2,
-    height: bounds.height + paddingY * 2
+    height: bounds.height + paddingTop + paddingBottom
   };
 }
 
