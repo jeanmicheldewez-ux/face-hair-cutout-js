@@ -42,6 +42,9 @@ inside an expanded face region for glasses.
 
 ## Demo
 
+Hosted demo:
+https://jeanmicheldewez-ux.github.io/face-hair-cutout-js/
+
 ```sh
 npm run dev
 ```
