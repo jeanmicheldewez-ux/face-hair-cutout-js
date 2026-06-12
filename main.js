@@ -31,10 +31,7 @@ fileInput.addEventListener("change", async () => {
   if (!file) return;
 
   sourceImage = await createImageBitmap(file);
-  drawSource(sourceImage);
-  runButton.disabled = false;
-  downloadLink.hidden = true;
-  statusText.textContent = "Ready";
+  setSourceImage(sourceImage, file.name);
 });
 
 runButton.addEventListener("click", async () => {
@@ -53,11 +50,14 @@ runButton.addEventListener("click", async () => {
     statusText.textContent = "Segmenting...";
 
     const result = await cutoutFaceHair(sourceImage, tasks, {
-      maxWidth: 1024,
-      maxHeight: 1024,
-      cropPaddingRatio: 0.22,
-      cropPaddingTopRatio: 0.45,
-      cropPaddingBottomRatio: 0.18,
+      maxWidth: 480,
+      maxHeight: 640,
+      topPaddingRatio: 0.25,
+      sidePaddingRatio: 0.14,
+      bottomPaddingRatio: 0.06,
+      inputScaleRatio: 0.75,
+      outputFit: "contain",
+      debugCrop: false,
       keepCategoryIndexes: [1, 3],
       accessoryCategoryIndexes: [5],
       accessoryFaceExpansionRatio: 0.18,
@@ -70,6 +70,14 @@ runButton.addEventListener("click", async () => {
     get2d(resultCanvas).drawImage(result.canvas, 0, 0);
     downloadLink.href = result.pngDataUrl;
     downloadLink.hidden = false;
+    console.log("face-hair-cutout result", {
+      rawMaskBox: result.rawMaskBox,
+      paddedCropBox: result.paddedCropBox,
+      requestedCropBox: result.requestedCropBox,
+      cropCanvasSize: result.cropCanvasSize,
+      outputSize: result.outputSize,
+      resize: result.resize
+    });
     statusText.textContent = `Done: ${result.canvas.width} x ${result.canvas.height}`;
   } catch (error) {
     console.error(error);
@@ -81,12 +89,32 @@ runButton.addEventListener("click", async () => {
 
 /**
  * @param {ImageBitmap} image
+ * @param {string} label
+ */
+function setSourceImage(image, label) {
+  drawSource(image);
+  clearCanvas(resultCanvas);
+  runButton.disabled = false;
+  downloadLink.hidden = true;
+  statusText.textContent = `Ready: ${label}`;
+}
+
+/**
+ * @param {ImageBitmap} image
  */
 function drawSource(image) {
   const scale = Math.min(1, 720 / image.width, 720 / image.height);
   sourceCanvas.width = Math.round(image.width * scale);
   sourceCanvas.height = Math.round(image.height * scale);
   get2d(sourceCanvas).drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
+}
+
+/**
+ * @param {HTMLCanvasElement} canvas
+ */
+function clearCanvas(canvas) {
+  const context = get2d(canvas);
+  context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /**

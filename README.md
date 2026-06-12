@@ -26,11 +26,14 @@ const tasks = await createCutoutTasks({
 const result = await cutoutFaceHair(imageElement, tasks, {
   keepCategoryIndexes: [1, 3], // MediaPipe Multi-class Selfie: hair + face-skin
   accessoryCategoryIndexes: [5], // keep glasses/accessories near the face only
-  maxWidth: 1024,
-  maxHeight: 1024,
-  cropPaddingRatio: 0.22,
-  cropPaddingTopRatio: 0.45,
-  cropPaddingBottomRatio: 0.18,
+  maxWidth: 480,
+  maxHeight: 640,
+  topPaddingRatio: 0.25,
+  sidePaddingRatio: 0.14,
+  bottomPaddingRatio: 0.06,
+  inputScaleRatio: 0.75,
+  outputFit: "contain",
+  debugCrop: false,
   chinMarginRatio: 0.06,
   bottomFeatherRatio: 0.025
 });
@@ -51,6 +54,9 @@ https://jeanmicheldewez-ux.github.io/face-hair-cutout-js/
 ```sh
 npm run dev
 ```
+
+The demo logs the raw mask box, padded crop box, crop canvas size, output size,
+and contain resize details to the console.
 
 The demo is prefilled with the Multi-class Selfie Segmenter URL. You can replace
 it with another Image Segmenter model URL if you also update

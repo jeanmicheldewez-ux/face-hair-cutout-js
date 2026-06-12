@@ -45,7 +45,8 @@ input[type="url"] {
   min-width: min(420px, 100%);
 }
 
-button {
+button,
+.button-link {
   height: 38px;
   border: 1px solid #27272a;
   border-radius: 6px;
@@ -55,6 +56,12 @@ button {
   font: inherit;
   text-decoration: none;
   cursor: pointer;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .model-help {
@@ -127,4 +134,5 @@ canvas {
   .panes {
     grid-template-columns: 1fr;
   }
+
 }
