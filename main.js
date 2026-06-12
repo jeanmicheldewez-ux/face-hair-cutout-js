@@ -57,6 +57,8 @@ runButton.addEventListener("click", async () => {
       bottomPaddingRatio: 0.06,
       inputScaleRatio: 0.75,
       outputFit: "contain",
+      outputTrimTopRatio: 0.07,
+      outputTrimBottomRatio: 0.02,
       debugCrop: false,
       keepCategoryIndexes: [1, 3],
       accessoryCategoryIndexes: [5],
@@ -76,7 +78,8 @@ runButton.addEventListener("click", async () => {
       requestedCropBox: result.requestedCropBox,
       cropCanvasSize: result.cropCanvasSize,
       outputSize: result.outputSize,
-      resize: result.resize
+      resize: result.resize,
+      outputTrim: result.outputTrim
     });
     statusText.textContent = `Done: ${result.canvas.width} x ${result.canvas.height}`;
   } catch (error) {

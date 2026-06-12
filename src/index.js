@@ -97,6 +97,8 @@ export async function createCutoutTasks(options = {}) {
  * @param {number} [options.bottomPaddingRatio]
  * @param {number} [options.inputScaleRatio]
  * @param {"contain"} [options.outputFit]
+ * @param {number} [options.outputTrimTopRatio]
+ * @param {number} [options.outputTrimBottomRatio]
  * @param {number} [options.cropPaddingRatio]
  * @param {number} [options.cropPaddingXRatio]
  * @param {number} [options.cropPaddingTopRatio]
@@ -105,7 +107,7 @@ export async function createCutoutTasks(options = {}) {
  * @param {number} [options.chinMarginRatio]
  * @param {number} [options.bottomFeatherRatio]
  * @param {number} [options.maskFeatherPx]
- * @returns {Promise<{canvas: HTMLCanvasElement, pngBlob: Blob, pngDataUrl: string, bounds: {x: number, y: number, width: number, height: number}, rawMaskBox: {x: number, y: number, width: number, height: number}, paddedCropBox: {x: number, y: number, width: number, height: number}, requestedCropBox: {x: number, y: number, width: number, height: number}, cropCanvasSize: {width: number, height: number}, outputSize: {width: number, height: number}, resize: {fit: "contain", scale: number, sourceWidth: number, sourceHeight: number, outputWidth: number, outputHeight: number}, debug?: {segmentationMaskCanvas: HTMLCanvasElement, finalAlphaMaskCanvas: HTMLCanvasElement, cropCanvas: HTMLCanvasElement}, debugCanvas?: HTMLCanvasElement}>}
+ * @returns {Promise<{canvas: HTMLCanvasElement, pngBlob: Blob, pngDataUrl: string, bounds: {x: number, y: number, width: number, height: number}, rawMaskBox: {x: number, y: number, width: number, height: number}, paddedCropBox: {x: number, y: number, width: number, height: number}, requestedCropBox: {x: number, y: number, width: number, height: number}, cropCanvasSize: {width: number, height: number}, outputSize: {width: number, height: number}, resize: {fit: "contain", scale: number, sourceWidth: number, sourceHeight: number, outputWidth: number, outputHeight: number}, outputTrim: {top: number, bottom: number, sourceWidth: number, sourceHeight: number, outputWidth: number, outputHeight: number}, debug?: {segmentationMaskCanvas: HTMLCanvasElement, finalAlphaMaskCanvas: HTMLCanvasElement, cropCanvas: HTMLCanvasElement}, debugCanvas?: HTMLCanvasElement}>}
  */
 export async function cutoutFaceHair(image, tasks, options = {}) {
   const {
@@ -123,6 +125,8 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     bottomPaddingRatio = cropPaddingBottomRatio ?? 0.06,
     inputScaleRatio = 0.75,
     outputFit = "contain",
+    outputTrimTopRatio = 0,
+    outputTrimBottomRatio = 0,
     debugCrop = false,
     chinMarginRatio = 0.06,
     bottomFeatherRatio = 0.02,
@@ -194,7 +198,12 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
   });
   const cropped = cropSourceWithAlpha(source, refinedAlpha, cropLayout);
   const { canvas: resized, resize } = resizeToFit(cropped, maxWidth, maxHeight);
-  const outputSize = { width: resized.width, height: resized.height };
+  const { canvas: output, outputTrim } = trimVerticalOutput(
+    resized,
+    outputTrimTopRatio,
+    outputTrimBottomRatio
+  );
+  const outputSize = { width: output.width, height: output.height };
   const debug = debugCrop
     ? {
         segmentationMaskCanvas: drawAlphaMask(segmentationAlpha, width, height),
@@ -224,16 +233,17 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
         y: cropLayout.drawY
       },
       outputSize,
-      resize
+      resize,
+      outputTrim
     });
   }
 
-  const pngBlob = await canvasToBlob(resized);
+  const pngBlob = await canvasToBlob(output);
 
   return {
-    canvas: resized,
+    canvas: output,
     pngBlob,
-    pngDataUrl: resized.toDataURL("image/png"),
+    pngDataUrl: output.toDataURL("image/png"),
     bounds: cropLayout.paddedCropBox,
     rawMaskBox,
     paddedCropBox: cropLayout.paddedCropBox,
@@ -244,6 +254,7 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     },
     outputSize,
     resize,
+    outputTrim,
     ...(debug ? { debug, debugCanvas: debug.cropCanvas } : {})
   };
 }
@@ -620,6 +631,57 @@ function resizeToFit(source, maxWidth, maxHeight) {
     resize: {
       fit: "contain",
       scale,
+      sourceWidth: source.width,
+      sourceHeight: source.height,
+      outputWidth: output.width,
+      outputHeight: output.height
+    }
+  };
+}
+
+/**
+ * @param {HTMLCanvasElement} source
+ * @param {number} topRatio
+ * @param {number} bottomRatio
+ * @returns {{canvas: HTMLCanvasElement, outputTrim: {top: number, bottom: number, sourceWidth: number, sourceHeight: number, outputWidth: number, outputHeight: number}}}
+ */
+function trimVerticalOutput(source, topRatio, bottomRatio) {
+  const top = Math.round(source.height * clamp(topRatio, 0, 0.45));
+  const bottom = Math.round(source.height * clamp(bottomRatio, 0, 0.45));
+  const outputHeight = Math.max(1, source.height - top - bottom);
+
+  if (top === 0 && bottom === 0) {
+    return {
+      canvas: source,
+      outputTrim: {
+        top,
+        bottom,
+        sourceWidth: source.width,
+        sourceHeight: source.height,
+        outputWidth: source.width,
+        outputHeight: source.height
+      }
+    };
+  }
+
+  const output = makeCanvas(source.width, outputHeight);
+  get2d(output).drawImage(
+    source,
+    0,
+    top,
+    source.width,
+    outputHeight,
+    0,
+    0,
+    source.width,
+    outputHeight
+  );
+
+  return {
+    canvas: output,
+    outputTrim: {
+      top,
+      bottom,
       sourceWidth: source.width,
       sourceHeight: source.height,
       outputWidth: output.width,
