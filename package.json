@@ -1,0 +1,23 @@
+{
+  "name": "face-hair-cutout-js",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "module": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "description": "Browser image cutout utility that preserves hair/face segmentation contours and removes neck/body below the chin.",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.35"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
