@@ -53,8 +53,9 @@ runButton.addEventListener("click", async () => {
     statusText.textContent = "Segmenting...";
 
     const result = await cutoutFaceHair(sourceImage, tasks, {
-      maxWidth: 768,
-      maxHeight: 768,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      cropPaddingRatio: 0.22,
       keepCategoryIndexes: [1, 3],
       accessoryCategoryIndexes: [5],
       accessoryFaceExpansionRatio: 0.18,

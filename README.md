@@ -26,8 +26,9 @@ const tasks = await createCutoutTasks({
 const result = await cutoutFaceHair(imageElement, tasks, {
   keepCategoryIndexes: [1, 3], // MediaPipe Multi-class Selfie: hair + face-skin
   accessoryCategoryIndexes: [5], // keep glasses/accessories near the face only
-  maxWidth: 768,
-  maxHeight: 768,
+  maxWidth: 1024,
+  maxHeight: 1024,
+  cropPaddingRatio: 0.22,
   chinMarginRatio: 0.06,
   bottomFeatherRatio: 0.025
 });

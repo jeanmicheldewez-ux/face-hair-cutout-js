@@ -92,6 +92,7 @@ export async function createCutoutTasks(options = {}) {
  * @param {number} [options.accessoryFaceExpansionRatio]
  * @param {number} [options.maxWidth]
  * @param {number} [options.maxHeight]
+ * @param {number} [options.cropPaddingRatio]
  * @param {number} [options.chinMarginRatio]
  * @param {number} [options.bottomFeatherRatio]
  * @param {number} [options.maskFeatherPx]
@@ -104,6 +105,7 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     accessoryFaceExpansionRatio = 0.18,
     maxWidth = 1024,
     maxHeight = 1024,
+    cropPaddingRatio = 0.18,
     chinMarginRatio = 0.06,
     bottomFeatherRatio = 0.02,
     maskFeatherPx = 1
@@ -161,14 +163,15 @@ export async function cutoutFaceHair(image, tasks, options = {}) {
     throw new Error("The final mask is empty. Check segmenter category indexes.");
   }
 
-  const cropped = cropAndResize(alphaCanvas, bounds, maxWidth, maxHeight);
+  const paddedBounds = padBounds(bounds, cropPaddingRatio);
+  const cropped = cropAndResize(alphaCanvas, paddedBounds, maxWidth, maxHeight);
   const pngBlob = await canvasToBlob(cropped);
 
   return {
     canvas: cropped,
     pngBlob,
     pngDataUrl: cropped.toDataURL("image/png"),
-    bounds
+    bounds: paddedBounds
   };
 }
 
@@ -368,6 +371,22 @@ function getAlphaBounds(alpha, width, height) {
 }
 
 /**
+ * @param {{x: number, y: number, width: number, height: number}} bounds
+ * @param {number} paddingRatio
+ * @returns {{x: number, y: number, width: number, height: number}}
+ */
+function padBounds(bounds, paddingRatio) {
+  const paddingX = Math.round(bounds.width * paddingRatio);
+  const paddingY = Math.round(bounds.height * paddingRatio);
+  return {
+    x: bounds.x - paddingX,
+    y: bounds.y - paddingY,
+    width: bounds.width + paddingX * 2,
+    height: bounds.height + paddingY * 2
+  };
+}
+
+/**
  * @param {HTMLCanvasElement} source
  * @param {{x: number, y: number, width: number, height: number}} bounds
  * @param {number} maxWidth
@@ -382,14 +401,14 @@ function cropAndResize(source, bounds, maxWidth, maxHeight) {
   );
   get2d(output).drawImage(
     source,
-    bounds.x,
-    bounds.y,
-    bounds.width,
-    bounds.height,
     0,
     0,
-    output.width,
-    output.height
+    source.width,
+    source.height,
+    Math.round(-bounds.x * scale),
+    Math.round(-bounds.y * scale),
+    Math.round(source.width * scale),
+    Math.round(source.height * scale)
   );
   return output;
 }
